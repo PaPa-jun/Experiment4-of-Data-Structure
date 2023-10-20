@@ -33,15 +33,15 @@ void init(Number *InitNum);
 Number FractoNumber(Frac origin);
 int Judge(Number A , Number B);
 Number NumtoNbase(Number Origin , int N);
-void NumberPrint(Number A);
-Number Plus(Number A ,Number B , int N);
-Number Subtraction(Number A , Number B , int N);
-Number Multiply(Number A , Number B , int N);
+void NumberPrint(Number A , int N , int flag);
+Number Plus(Number A ,Number B);
+Number Subtraction(Number A , Number B);
+Number Multiply(Number A , Number B);
 Number DealPolynomial();
 Polynomial *InitPoly();
 Polynomial *ItemInsert(Polynomial *p , int i , Item Element);
 Number Read();
-void PolyPrint(Polynomial *p , Number X);
+void PolyPrint(Polynomial *p , Number X , int N);
 
 //初始化清空
 void init(Number *InitNum){
@@ -128,20 +128,39 @@ Number NumtoNbase(Number Origin , int N){
 }
 
 //打印数字
-void NumberPrint(Number A){
-    if(A.isNegative == 1){
-        printf("-");
+void NumberPrint(Number A , int N , int flag){
+    if(N == 10){
+        if(flag == 1){printf("10 进制：");}
+        if(A.isNegative == 1){
+            printf("-");
+        }else{
+            printf("+");
+        }
+        printf("%d." , A.Integer);
+        for(int i = 0 ; i < 3 ; i++){
+            printf("%d" , A.Decimal[i]);
+        }
     }else{
-        printf("+");
-    }
-    printf("%d." , A.Integer);
-    for(int i = 0 ; i < 3 ; i++){
-        printf("%d" , A.Decimal[i]);
+        NumberPrint(A , 10 , 1);
+        printf("\n%d 进制：" , N);
+        Number NbaseNumber;
+        init(&NbaseNumber);
+
+        NbaseNumber = NumtoNbase(A , N);
+        if(NbaseNumber.isNegative == 1){
+            printf("-");
+        }else{
+            printf("+");
+        }
+        printf("%d." , NbaseNumber.Integer);
+        for(int i = 0 ; i < 3 ; i++){
+            printf("%d" , NbaseNumber.Decimal[i]);
+        }
     }
 }
 
 //加法
-Number Plus(Number A ,Number B , int N){
+Number Plus(Number A ,Number B){
     Number Result;
     init(&Result);
 
@@ -160,22 +179,20 @@ Number Plus(Number A ,Number B , int N){
             Result.Decimal[i] = (A.Decimal[i] + B.Decimal[i] + temp[i+1])%10;
         }
         Result.Integer += temp[0];
-
-        Number NbaseResult = NumtoNbase(Result , N);
     }else{
         if(A.isNegative == 0){
             B.isNegative = 0;
-            Result = Subtraction(A , B , N);
+            Result = Subtraction(A , B);
         }else{
             A.isNegative = 0;
-            Result = Subtraction(B , A , N);
+            Result = Subtraction(B , A);
         }
     }
     return Result;
 }
 
 //减法
-Number Subtraction(Number A , Number B , int N){
+Number Subtraction(Number A , Number B){
     Number Result;
     init(&Result);
     int flag = 0;
@@ -184,19 +201,19 @@ Number Subtraction(Number A , Number B , int N){
 
     if(A.isNegative == 1 && B.isNegative == 0){
         A.isNegative = 0;
-        Result = Plus(A , B , N);
+        Result = Plus(A , B);
         Result.isNegative = 1;
         flag = 1;
     }
     if(A.isNegative == 1 && B.isNegative == 1){
         B.isNegative = 0;
         A.isNegative = 0;
-        Result = Subtraction(B , A , N);
+        Result = Subtraction(B , A);
         flag = 1;
     }
     if(A.isNegative == 0 && B.isNegative == 1){
         B.isNegative = 0;
-        Result = Plus(A , B , N);
+        Result = Plus(A , B);
         flag = 1;
     }
     if(flag != 1){
@@ -224,7 +241,7 @@ Number Subtraction(Number A , Number B , int N){
                 Result.Integer = A.Integer - B.Integer;
             }
             else{
-                Result = Subtraction(B , A , N);
+                Result = Subtraction(B , A);
                 Result.isNegative = 1;
             }
         }
@@ -233,7 +250,7 @@ Number Subtraction(Number A , Number B , int N){
 }
 
 //乘法
-Number Multiply(Number A , Number B , int N){
+Number Multiply(Number A , Number B){
     Number Result;
     init(&Result);
 
@@ -327,19 +344,22 @@ Number Mi(Number X , int N){
     }
     Res = X;
     for(int i = 0 ; i < N-1 ; i++){
-        Res = Multiply(Res , X , 10);
+        Res = Multiply(Res , X);
     }
     return Res;
 }
 
-//多项式
+//处理多项式
 Number DealPolynomial(){
     Number X;   //未知数
     int itemnumber;
+    int base;   //除了十进制之外，还需要打印的进制
     printf("请输入未知数：");
     X = Read();
     printf("请输入项数：");
     scanf("%d" , &itemnumber);
+    printf("结果进制（10进制除外，2~20之间）：");
+    scanf("%d" , &base);
 
     Polynomial *Poly;
     Poly = InitPoly();
@@ -357,7 +377,7 @@ Number DealPolynomial(){
         items[i].exponent = ex;
         ItemInsert(Poly , i+1 , items[i]);
     }
-    PolyPrint(Poly , X);
+    PolyPrint(Poly , X , base);
 
 
     //运算
@@ -365,22 +385,22 @@ Number DealPolynomial(){
     init(&Result);
     Polynomial *p = Poly;
     while (p = p->Next){
-        Result = Plus(Result , Multiply(p->items.coefficient , Mi(X , p->items.exponent) , 10) , 10);
+        Result = Plus(Result , Multiply(p->items.coefficient , Mi(X , p->items.exponent)));
     }
-    printf("\n 运算结果：f(x) = ");
-    NumberPrint(Result);
+    printf("\n 运算结果：f(x) = \n");
+    NumberPrint(Result , base , 1);
 }
 
 //打印多项式
-void PolyPrint(Polynomial *p , Number X){
+void PolyPrint(Polynomial *p , Number X , int N){
     printf("f(x) = ");
     while (p->Next){
-        NumberPrint(p->Next->items.coefficient);
+        NumberPrint(p->Next->items.coefficient , 10 , 0);
         printf("*x^(%d)" , p->Next->items.exponent);
         p = p->Next;
     }
     printf("\t x = ");
-    NumberPrint(X);
+    NumberPrint(X , 10 , 0);
 }
 
 //读取高精度数
