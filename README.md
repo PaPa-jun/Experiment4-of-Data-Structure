@@ -19,7 +19,7 @@ typedef struct HighAccuracyNum{
 ```
 - 加法运算：
 ```
-Number Plus(Number A ,Number B , int N){
+Number Plus(Number A ,Number B){
     Number Result;
     init(&Result);
 
@@ -38,15 +38,13 @@ Number Plus(Number A ,Number B , int N){
             Result.Decimal[i] = (A.Decimal[i] + B.Decimal[i] + temp[i+1])%10;
         }
         Result.Integer += temp[0];
-
-        Number NbaseResult = NumtoNbase(Result , N);
     }else{
         if(A.isNegative == 0){
             B.isNegative = 0;
-            Result = Subtraction(A , B , N);
+            Result = Subtraction(A , B);
         }else{
             A.isNegative = 0;
-            Result = Subtraction(B , A , N);
+            Result = Subtraction(B , A);
         }
     }
     return Result;
@@ -54,7 +52,7 @@ Number Plus(Number A ,Number B , int N){
 ```
 - 减法运算：
 ```
-Number Subtraction(Number A , Number B , int N){
+Number Subtraction(Number A , Number B){
     Number Result;
     init(&Result);
     int flag = 0;
@@ -63,19 +61,19 @@ Number Subtraction(Number A , Number B , int N){
 
     if(A.isNegative == 1 && B.isNegative == 0){
         A.isNegative = 0;
-        Result = Plus(A , B , N);
+        Result = Plus(A , B);
         Result.isNegative = 1;
         flag = 1;
     }
     if(A.isNegative == 1 && B.isNegative == 1){
         B.isNegative = 0;
         A.isNegative = 0;
-        Result = Subtraction(B , A , N);
+        Result = Subtraction(B , A);
         flag = 1;
     }
     if(A.isNegative == 0 && B.isNegative == 1){
         B.isNegative = 0;
-        Result = Plus(A , B , N);
+        Result = Plus(A , B);
         flag = 1;
     }
     if(flag != 1){
@@ -103,7 +101,7 @@ Number Subtraction(Number A , Number B , int N){
                 Result.Integer = A.Integer - B.Integer;
             }
             else{
-                Result = Subtraction(B , A , N);
+                Result = Subtraction(B , A);
                 Result.isNegative = 1;
             }
         }
@@ -114,7 +112,7 @@ Number Subtraction(Number A , Number B , int N){
 *注意到，加法运算和减法运算之间存在互相调用，目的是为了处理正负号，减法运算中还含有一点递归的逻辑，目的是将减数与被减数的符号差异通过递归调用的方式转换成两个都为正数的最简单的情况进行运算。*
 - 乘法运算：
 ```
-Number Multiply(Number A , Number B , int N){
+Number Multiply(Number A , Number B){
     Number Result;
     init(&Result);
 
