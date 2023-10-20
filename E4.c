@@ -33,7 +33,7 @@ void init(Number *InitNum);
 Number FractoNumber(Frac origin);
 int Judge(Number A , Number B);
 Number NumtoNbase(Number Origin , int N);
-void NumberPrint(Number A , int N , int flag);
+void NumberPrint(Number A , int N , int flag , int PRE);
 Number Plus(Number A ,Number B);
 Number Subtraction(Number A , Number B);
 Number Multiply(Number A , Number B);
@@ -128,20 +128,32 @@ Number NumtoNbase(Number Origin , int N){
 }
 
 //打印数字
-void NumberPrint(Number A , int N , int flag){
+void NumberPrint(Number A , int N , int flag , int PRE){
+    int pre = 3;
     if(N == 10){
-        if(flag == 1){printf("10 进制：");}
+        if(flag == 1){
+            printf("10 进制：");
+            pre = PRE;
+        }
         if(A.isNegative == 1){
             printf("-");
         }else{
             printf("+");
         }
         printf("%d." , A.Integer);
-        for(int i = 0 ; i < 3 ; i++){
-            printf("%d" , A.Decimal[i]);
+        for(int i = 0 ; i < pre ; i++){
+            if(i == pre-1){
+                if(A.Decimal[pre] >= 5){
+                    printf("%d" , A.Decimal[i]+1);
+                }else{
+                    printf("%d" , A.Decimal[i]);
+                }
+            }else{
+                printf("%d" , A.Decimal[i]);
+            }
         }
     }else{
-        NumberPrint(A , 10 , 1);
+        NumberPrint(A , 10 , 1 , PRE);
         printf("\n%d 进制：" , N);
         Number NbaseNumber;
         init(&NbaseNumber);
@@ -153,7 +165,7 @@ void NumberPrint(Number A , int N , int flag){
             printf("+");
         }
         printf("%d." , NbaseNumber.Integer);
-        for(int i = 0 ; i < 3 ; i++){
+        for(int i = 0 ; i < PRE ; i++){
             printf("%d" , NbaseNumber.Decimal[i]);
         }
     }
@@ -354,11 +366,11 @@ Number DealPolynomial(){
     Number X;   //未知数
     int itemnumber;
     int base;   //除了十进制之外，还需要打印的进制
-    printf("请输入未知数：");
+    printf("请输入未知数：\n");
     X = Read();
-    printf("请输入项数：");
+    printf("请输入多项式的项数：");
     scanf("%d" , &itemnumber);
-    printf("结果进制（10进制除外，2~20之间）：");
+    printf("请输入想要的结果进制（10进制除外，2~20之间）：");
     scanf("%d" , &base);
 
     Polynomial *Poly;
@@ -369,7 +381,7 @@ Number DealPolynomial(){
     for(int i = 0 ; i < itemnumber ;i++){
         Number conficient;
         int ex;
-        printf("请输入第 %d 项的系数：" , i+1);
+        printf("请输入第 %d 项的系数：\n" , i+1);
         conficient = Read();
         items[i].coefficient = conficient;
         printf("请输入第 %d 项的指数：" , i+1);
@@ -378,6 +390,9 @@ Number DealPolynomial(){
         ItemInsert(Poly , i+1 , items[i]);
     }
     PolyPrint(Poly , X , base);
+    int PRE;
+    printf("\n请输入希望保留的精度（0~200）：");
+    scanf("%d" , &PRE);
 
 
     //运算
@@ -387,20 +402,20 @@ Number DealPolynomial(){
     while (p = p->Next){
         Result = Plus(Result , Multiply(p->items.coefficient , Mi(X , p->items.exponent)));
     }
-    printf("\n 运算结果：f(x) = \n");
-    NumberPrint(Result , base , 1);
+    printf("运算结果：f(x) = \n");
+    NumberPrint(Result , base , 1 , PRE);
 }
 
 //打印多项式
 void PolyPrint(Polynomial *p , Number X , int N){
     printf("f(x) = ");
     while (p->Next){
-        NumberPrint(p->Next->items.coefficient , 10 , 0);
+        NumberPrint(p->Next->items.coefficient , 10 , 0 , 3);
         printf("*x^(%d)" , p->Next->items.exponent);
         p = p->Next;
     }
     printf("\t x = ");
-    NumberPrint(X , 10 , 0);
+    NumberPrint(X , 10 , 0 , 3);
 }
 
 //读取高精度数
@@ -408,37 +423,52 @@ Number Read(){
     Number A;
     init(&A);
     A.base = 10;
+    int fracorfloat;
 
-    char *num = (char*)malloc(precision*sizeof(char));
-    if(!num)printf("分配失败！");
-    printf("请输入：");
-    scanf("%s" , num);
-    int i = 0;
-    int flag = 0;
-    int j = 0;
-    //printf("%d" , num[4]);
-    while (num[i]){
-        if(num[i] == '-'){
-            A.isNegative = 1;
+    printf("小数还是分数？（1 - 小数 ； 0 - 分数）：");
+    scanf("%d" , &fracorfloat);
+    if(fracorfloat == 1){
+        char *num = (char*)malloc(precision*sizeof(char));
+        if(!num)printf("分配失败！");
+        printf("请输入：");
+        scanf("%s" , num);
+        int i = 0;
+        int flag = 0;
+        int j = 0;
+        //printf("%d" , num[4]);
+        while (num[i]){
+            if(num[i] == '-'){
+                A.isNegative = 1;
+                i++;
+                continue;
+            }
+            if(num[i] == '.'){
+                flag = 1;
+                i++;
+                continue;
+            }
+            if(flag == 0){
+                A.Integer = A.Integer*10+num[i]-'0';
+            }else{
+                A.Decimal[j] = num[i]-'0';
+                j++;
+            }
             i++;
-            continue;
         }
-        if(num[i] == '.'){
-            flag = 1;
-            i++;
-            continue;
-        }
-        if(flag == 0){
-            A.Integer = A.Integer*10+num[i]-'0';
-        }else{
-            A.Decimal[j] = num[i]-'0';
-            j++;
-        }
-        i++;
+
+        free(num);
+        return A;
+    }else{
+        Frac sondivisonmom;
+        printf("正负（0 - 正 ； 1 - 负）：");
+        scanf("%d" , &sondivisonmom.isNegative);
+        printf("请输入分子：");
+        scanf("%d" , &sondivisonmom.a);
+        printf("请输入分母：");
+        scanf("%d" , &sondivisonmom.b);
+
+        return FractoNumber(sondivisonmom);
     }
-
-    free(num);
-    return A;
 }
 
 //初始化多项式
